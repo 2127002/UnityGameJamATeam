@@ -26,7 +26,7 @@ public class PlayerMover
     {
         if (rigidbody.velocity.x >= maxMoveSpeed)
         {
-            rigidbody.AddForce(transform.right * moveSpeed);
+            rigidbody.velocity = new Vector3(moveSpeed, rigidbody.velocity.y, rigidbody.velocity.z);
         }
     }
 
