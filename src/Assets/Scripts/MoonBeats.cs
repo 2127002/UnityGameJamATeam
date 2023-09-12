@@ -11,9 +11,7 @@ public class MoonBeats : MonoBehaviour
     [SerializeField]
     private int bpm;
 
-    private Sprite moon;
     private float time = 0;
-
     private Animator animator;
     
 
