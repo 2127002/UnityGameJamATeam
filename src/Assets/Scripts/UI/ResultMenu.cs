@@ -13,6 +13,7 @@ public class ResultMenu : MonoBehaviour
         DOTween.To(() => canvasGroupmy.alpha, (v) => canvasGroupmy.alpha = v, 1.0f, 0.3f).OnComplete(() =>
         {
             canvasGroupmy.interactable = true;
+            canvasGroupmy.blocksRaycasts = true;
         });
     }
 

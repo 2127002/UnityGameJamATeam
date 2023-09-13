@@ -33,6 +33,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private CountdownUI countdownUI;
     [SerializeField] private ResultMenu resultMenu;
 
+    [SerializeField] private ComboView comboView;
+
     private Animator anim;
 
     private GameState state;
@@ -51,6 +53,11 @@ public class GameManager : MonoBehaviour
     private Transform player;
     private Rigidbody playerRdb;
     private LevelMove levelMove;
+
+    private int combo;
+
+    [SerializeField]
+    private MoonBeats moonBeats;
     // Start is called before the first frame update
     private async void Start()
     {
@@ -67,7 +74,7 @@ public class GameManager : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
         jump = playerInput.currentActionMap["Jump"];
 
-        anim = player.GetComponent<Animator>();
+        anim = player.transform.Find("root/body").GetComponent<Animator>();
 
         jumpCount = maxJumpCount;
 
@@ -75,19 +82,15 @@ public class GameManager : MonoBehaviour
         var cts_ = new CancellationTokenSource();
         await Opening(cts_.Token);
         cts_.Cancel();
-
-        //判定
-        var cts = new CancellationTokenSource();
-        await Beat(cts.Token);
-        cts.Cancel();
     }
 
     private bool isGround;
     private int jumpCount;
     float jumpPower = 0;
+    float pitch = 1;
     void FixedUpdate()
     {
-        player.transform.Find("root/body").GetComponent<Animator>().SetBool("run", state == GameState.game);
+        anim.SetBool("run", state == GameState.game);
 
         if (state != GameState.game) return;
         //地形移動
@@ -123,6 +126,8 @@ public class GameManager : MonoBehaviour
         //ジャンプボタンを押した時
         if (jump.WasPressedThisFrame() && jumpCount > 0)
         {
+            SEManager.Instance.Play(SEPath.JUMP1);
+
             jumpPower = playerData.jumpPower;
             mover.JumpStart();
 
@@ -135,6 +140,10 @@ public class GameManager : MonoBehaviour
 
             if (JustMeet < 0.4f && JustMeet > 0)
             {
+                SEManager.Instance.Play(SEPath.JAN, pitch: pitch, volumeRate: 0.5f);
+                combo++;
+                pitch += 0.05f;
+                comboView.ComboViewer(combo.ToString());
                 Debug.Log("Good!");
             }
         }
@@ -189,18 +198,26 @@ public class GameManager : MonoBehaviour
         DOTween.To(() => countDown.alpha, (v) => countDown.alpha = v, 0, 0.5f);
 
         state = GameState.game;
+
+        BGMManager.Instance.Play(BGMPath.MOONBEET);
+
+        moonBeats.BeatsStart();
+
+        //判定
+        var cts = new CancellationTokenSource();
+        await Beat(cts.Token);
+        cts.Cancel();
     }
 
     async UniTask Beat(CancellationToken token)
     {
+        await Task.Delay(372, token);
+        JustMeet = 0.3f;
         while (state == GameState.game)
         {
-            await Task.Delay(422, token);
-            JustMeet = 0.2f;
-            await Task.Delay(100, token);
-            // SEManager.Instance.Play(SEPath.SYSTEM20);
+            await Task.Delay(522, token);
+            JustMeet = 0.3f;
         }
-
     }
 
     public void Clear()

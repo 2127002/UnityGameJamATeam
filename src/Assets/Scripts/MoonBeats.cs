@@ -13,7 +13,7 @@ public class MoonBeats : MonoBehaviour
 
     private float time = 0;
     private Animator animator;
-    
+
 
     // Start is called before the first frame update
     void Start()
@@ -34,7 +34,8 @@ public class MoonBeats : MonoBehaviour
         }
     }
 
-    public void BeatsStart() {
+    public void BeatsStart()
+    {
         IsBpmAction = true;
         time = 0;
     }
