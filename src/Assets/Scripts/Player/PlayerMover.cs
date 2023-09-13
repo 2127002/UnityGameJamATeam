@@ -30,10 +30,13 @@ public class PlayerMover
         }
     }
 
-    public void Jump(float jumpPower, bool isGround)
+    public void Jump(float jumpPower)
     {
-        if (isGround == false) return;
-
         rigidbody.AddForce(transform.up * jumpPower);
+    }
+
+    public void SetGravity()
+    {
+        rigidbody.AddForce(new Vector2(0, -5));
     }
 }

@@ -2,10 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
+using DG.Tweening;
 public class PlayerCore : MonoBehaviour
 {
     [SerializeField] private PlayerData playerData;
+    [SerializeField] private Animator anim;
+    [SerializeField] private Transform body;
+
     private Rigidbody rig;
     private PlayerMover mover;
     PlayerInput playerInput;
@@ -20,7 +23,10 @@ public class PlayerCore : MonoBehaviour
         jump = playerInput.currentActionMap["Jump"];
 
         rig = GetComponent<Rigidbody>();
+
         mover = new PlayerMover(rig, playerData.moveSpeed, playerData.maxMoveSpeed, transform);
+
+        anim.SetBool("run", true);
     }
 
     public void Move()
@@ -28,11 +34,30 @@ public class PlayerCore : MonoBehaviour
         mover.Move();
     }
 
+    float jumpPower = 0;
     public void Jump()
     {
-        if (jump.WasPerformedThisFrame())
+        if (jump.WasPerformedThisFrame() && isGround == true)
         {
-            mover.Jump(playerData.jumpPower, isGround);
+            jumpPower = playerData.jumpPower;
+            anim.SetBool("jump", true);
+            body.DOScaleY(1.2f, 0.2f).OnComplete(() => body.DOScaleY(1.0f, 0.1f));
+        }
+
+        if (jump.IsPressed())
+        {
+            jumpPower -= Time.deltaTime * playerData.jumpPower * 5;
+            mover.Jump(jumpPower);
+        }
+
+        if (jumpPower <= 0)
+        {
+            jumpPower = 0;
+        }
+
+        if (isGround == false)
+        {
+            mover.SetGravity();
         }
     }
 
@@ -40,6 +65,14 @@ public class PlayerCore : MonoBehaviour
     {
         if (collisionInfo.gameObject.CompareTag("Ground"))
         {
+            anim.SetBool("jump", false);
+
+            body.DOScaleY(0.8f, 0.2f).OnComplete(() =>
+            body.DOScaleY(1.2f, 0.05f).OnComplete(() =>
+            body.DOScaleY(1.0f, 0.05f)
+            )
+            );
+
             isGround = true;
         }
     }
