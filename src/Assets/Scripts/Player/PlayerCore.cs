@@ -41,7 +41,7 @@ public class PlayerCore : MonoBehaviour
         {
             jumpPower = playerData.jumpPower;
             anim.SetBool("jump", true);
-            body.DOScaleY(1.2f, 0.2f).OnComplete(() => body.DOScaleY(1.0f, 0.1f));
+            body.DOScaleY(1.5f, 0.2f);
         }
 
         if (jump.IsPressed())
@@ -67,7 +67,7 @@ public class PlayerCore : MonoBehaviour
         {
             anim.SetBool("jump", false);
 
-            body.DOScaleY(0.8f, 0.2f).OnComplete(() =>
+            body.DOScaleY(0.8f, 0.15f).OnComplete(() =>
             body.DOScaleY(1.2f, 0.05f).OnComplete(() =>
             body.DOScaleY(1.0f, 0.05f)
             )
