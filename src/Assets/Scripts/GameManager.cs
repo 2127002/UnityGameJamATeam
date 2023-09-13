@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine.InputSystem;
 using KanKikuchi.AudioManager;
+using DG.Tweening;
 
 public enum GameState
 {
@@ -27,6 +28,13 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private PlayerData playerData;
     [SerializeField] private int maxJumpCount;
+    [SerializeField] private float moveSpeed;
+    [SerializeField] private CanvasGroup canvasGroup, countDown;
+    [SerializeField] private CountdownUI countdownUI;
+    [SerializeField] private ResultMenu resultMenu;
+
+    private Animator anim;
+
     private GameState state;
     private Camera mainCamera;
     [SerializeField] private List<Transform> levels = new List<Transform>();
@@ -41,25 +49,34 @@ public class GameManager : MonoBehaviour
     private InputAction move, jump;
 
     private Transform player;
+    private Rigidbody playerRdb;
+    private LevelMove levelMove;
     // Start is called before the first frame update
     private async void Start()
     {
-        state = GameState.game;
+        state = GameState.opening;
         mainCamera = Camera.main;
 
         player = Instantiate(playerData.player);
+        Camera.main.transform.parent = player.transform;
         player.transform.position = new Vector3(-8, 2, 0);
-        mover = new PlayerMover(player.GetComponent<Rigidbody>(), playerData.moveSpeed, player.transform.Find("root/body").GetComponent<Animator>(), player.transform.Find("root"));
-
+        playerRdb = player.GetComponent<Rigidbody>();
+        mover = new PlayerMover(playerRdb, playerData.moveSpeed, player.transform.Find("root/body").GetComponent<Animator>(), player.transform.Find("root"));
+        levelMove = new LevelMove(levels[0], moveSpeed);
         checkIsGround = new CheckIsGround();
         playerInput = GetComponent<PlayerInput>();
         jump = playerInput.currentActionMap["Jump"];
 
-        player.transform.Find("root/body").GetComponent<Animator>().SetBool("run", true);
+        anim = player.GetComponent<Animator>();
 
         jumpCount = maxJumpCount;
 
-        //オープニング演出を開始
+        //オープニング
+        var cts_ = new CancellationTokenSource();
+        await Opening(cts_.Token);
+        cts_.Cancel();
+
+        //判定
         var cts = new CancellationTokenSource();
         await Beat(cts.Token);
         cts.Cancel();
@@ -70,8 +87,11 @@ public class GameManager : MonoBehaviour
     float jumpPower = 0;
     void FixedUpdate()
     {
+        player.transform.Find("root/body").GetComponent<Animator>().SetBool("run", state == GameState.game);
+
+        if (state != GameState.game) return;
         //地形移動
-        // levelMove.Move();
+        levelMove.Move();
 
         //ジャンプボタン長押し
         if (jump.IsPressed())
@@ -83,6 +103,12 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (player.transform.position.y < -20)
+        {
+            state = GameState.result;
+            resultMenu.Show();
+        }
+
         if (JustMeet > 0)
         {
             JustMeet -= Time.deltaTime;
@@ -117,19 +143,19 @@ public class GameManager : MonoBehaviour
     private void PlayerJump()
     {
         //着地時
-        if (isGround == false && checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && player.GetComponent<Rigidbody>().velocity.y <= 0)
+        if (isGround == false && checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && playerRdb.velocity.y <= 0)
         {
             jumpCount = maxJumpCount;
             mover.Landing();
         }
 
         //着地判定
-        isGround = checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && player.GetComponent<Rigidbody>().velocity.y <= 0;
+        isGround = checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && playerRdb.velocity.y <= 0;
 
         //ジャンプボタン長押し
         if (jump.IsPressed())
         {
-            jumpPower -= Time.deltaTime * playerData.jumpPower * 5;
+            jumpPower -= Time.deltaTime * playerData.jumpPower * 10;
         }
 
         if (jumpPower <= 0)
@@ -143,14 +169,43 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    async UniTask Opening(CancellationToken token)
+    {
+        await Task.Delay(500, token);
+        await DOTween.To(() => canvasGroup.alpha, (v) => canvasGroup.alpha = v, 0, 0.3f).AsyncWaitForCompletion();
+        await Task.Delay(500, token);
+        await DOTween.To(() => countDown.alpha, (v) => countDown.alpha = v, 1.0f, 0.3f).AsyncWaitForCompletion();
+
+        for (int i = 3; i > 0; i--)
+        {
+            float fill = 1.0f;
+            await DOTween.To(() => fill, (v) => fill = v, 0.0f, 1.0f).OnUpdate(() => countdownUI.CountDownView(i.ToString(), fill)).AsyncWaitForCompletion();
+        }
+
+        countdownUI.CountDownView("GO", 0.0f);
+
+        await Task.Delay(1000, token);
+
+        DOTween.To(() => countDown.alpha, (v) => countDown.alpha = v, 0, 0.5f);
+
+        state = GameState.game;
+    }
+
     async UniTask Beat(CancellationToken token)
     {
         while (state == GameState.game)
         {
-            await Task.Delay(329, token);
+            await Task.Delay(422, token);
             JustMeet = 0.2f;
             await Task.Delay(100, token);
-            SEManager.Instance.Play(SEPath.SYSTEM20);
+            // SEManager.Instance.Play(SEPath.SYSTEM20);
         }
+
+    }
+
+    public void Clear()
+    {
+        state = GameState.result;
+        resultMenu.Show();
     }
 }

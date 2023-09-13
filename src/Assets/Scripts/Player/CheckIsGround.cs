@@ -10,7 +10,7 @@ public class CheckIsGround
 
         RaycastHit hit;
         bool isGround = false;
-        if (Physics.Raycast(ray, out hit, 1.0f)) // もしRayを投射して何らかのコライダーに衝突したら
+        if (Physics.Raycast(ray, out hit, 2.0f)) // もしRayを投射して何らかのコライダーに衝突したら
         {
             isGround = hit.collider.gameObject.CompareTag("Ground");
         }
