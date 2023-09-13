@@ -106,6 +106,8 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (state != GameState.game) return;
+
         if (player.transform.position.y < -20)
         {
             state = GameState.result;
@@ -141,9 +143,8 @@ public class GameManager : MonoBehaviour
             if (JustMeet < 0.4f && JustMeet > 0)
             {
                 SEManager.Instance.Play(SEPath.JAN, pitch: pitch, volumeRate: 0.5f);
-                combo++;
                 pitch += 0.05f;
-                comboView.ComboViewer(combo.ToString());
+                AddScore(1);
                 Debug.Log("Good!");
             }
         }
@@ -224,5 +225,11 @@ public class GameManager : MonoBehaviour
     {
         state = GameState.result;
         resultMenu.Show();
+    }
+
+    public void AddScore(int add)
+    {
+        combo += add;
+        comboView.ComboViewer(combo.ToString());
     }
 }
