@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private ComboView comboView;
 
+    [SerializeField] private CameraShaker cameraShaker;
+
     private Animator anim;
 
     private GameState state;
@@ -61,6 +63,8 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     private async void Start()
     {
+        Application.targetFrameRate = 60;
+
         state = GameState.opening;
         mainCamera = Camera.main;
 

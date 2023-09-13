@@ -65,6 +65,6 @@ public class PlayerMover
 
     public void SetGravity()
     {
-        rigidbody.AddForce(new Vector2(0, -10));
+        rigidbody.AddForce(new Vector2(0, -100));
     }
 }
