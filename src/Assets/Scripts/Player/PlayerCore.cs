@@ -15,73 +15,71 @@ public class PlayerCore : MonoBehaviour
     private InputAction move, jump;
     private bool isGround;
     // Start is called before the first frame update
-    void Start()
-    {
-        playerInput = GetComponent<PlayerInput>();
+    // void Start()
+    // {
+    //     playerInput = GetComponent<PlayerInput>();
 
-        move = playerInput.currentActionMap["Move"];
-        jump = playerInput.currentActionMap["Jump"];
+    //     move = playerInput.currentActionMap["Move"];
+    //     jump = playerInput.currentActionMap["Jump"];
 
-        rig = GetComponent<Rigidbody>();
+    //     rig = GetComponent<Rigidbody>();
 
-        mover = new PlayerMover(rig, playerData.moveSpeed, playerData.maxMoveSpeed, transform);
+    //     // mover = new PlayerMover(rig, playerData.moveSpeed, playerData.maxMoveSpeed, transform);
 
-        anim.SetBool("run", true);
-    }
+    //     anim.SetBool("run", true);
+    // }
 
-    public void Move()
-    {
-        mover.Move();
-    }
+    // public void Move()
+    // {
+    //     mover.Move();
+    // }
 
-    float jumpPower = 0;
-    public void Jump()
-    {
-        if (jump.WasPerformedThisFrame() && isGround == true)
-        {
-            jumpPower = playerData.jumpPower;
-            anim.SetBool("jump", true);
-            body.DOScaleY(1.5f, 0.2f);
-        }
+    // float jumpPower = 0;
+    // public void Jump()
+    // {
+    //     if (jump.WasPerformedThisFrame() && isGround == true)
+    //     {
+    //         jumpPower = playerData.jumpPower;
+    //     }
 
-        if (jump.IsPressed())
-        {
-            jumpPower -= Time.deltaTime * playerData.jumpPower * 5;
-            mover.Jump(jumpPower);
-        }
+    //     if (jump.IsPressed())
+    //     {
+    //         jumpPower -= Time.deltaTime * playerData.jumpPower * 5;
+    //         mover.Jump(jumpPower);
+    //     }
 
-        if (jumpPower <= 0)
-        {
-            jumpPower = 0;
-        }
+    //     if (jumpPower <= 0)
+    //     {
+    //         jumpPower = 0;
+    //     }
 
-        if (isGround == false)
-        {
-            mover.SetGravity();
-        }
-    }
+    //     if (isGround == false)
+    //     {
+    //         mover.SetGravity();
+    //     }
+    // }
 
-    void OnCollisionEnter(Collision collisionInfo)
-    {
-        if (collisionInfo.gameObject.CompareTag("Ground"))
-        {
-            anim.SetBool("jump", false);
+    // void OnCollisionEnter(Collision collisionInfo)
+    // {
+    //     if (collisionInfo.gameObject.CompareTag("Ground"))
+    //     {
+    //         anim.SetBool("jump", false);
 
-            body.DOScaleY(0.8f, 0.15f).OnComplete(() =>
-            body.DOScaleY(1.2f, 0.05f).OnComplete(() =>
-            body.DOScaleY(1.0f, 0.05f)
-            )
-            );
+    //         body.DOScaleY(0.8f, 0.15f).OnComplete(() =>
+    //         body.DOScaleY(1.2f, 0.05f).OnComplete(() =>
+    //         body.DOScaleY(1.0f, 0.05f)
+    //         )
+    //         );
 
-            isGround = true;
-        }
-    }
+    //         isGround = true;
+    //     }
+    // }
 
-    void OnCollisionExit(Collision collisionInfo)
-    {
-        if (collisionInfo.gameObject.CompareTag("Ground"))
-        {
-            isGround = false;
-        }
-    }
+    // void OnCollisionExit(Collision collisionInfo)
+    // {
+    //     if (collisionInfo.gameObject.CompareTag("Ground"))
+    //     {
+    //         isGround = false;
+    //     }
+    // }
 }
