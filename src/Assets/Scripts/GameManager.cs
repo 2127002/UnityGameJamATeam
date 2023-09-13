@@ -111,6 +111,7 @@ public class GameManager : MonoBehaviour
         if (player.transform.position.y < -20)
         {
             state = GameState.result;
+            Debug.Log("死んだ");
             resultMenu.Show();
         }
 
@@ -137,7 +138,7 @@ public class GameManager : MonoBehaviour
 
             if (JustMeet <= 0)
             {
-                Debug.Log("Miss");
+                // Debug.Log("Miss");
             }
 
             if (JustMeet < 0.4f && JustMeet > 0)
@@ -145,7 +146,7 @@ public class GameManager : MonoBehaviour
                 SEManager.Instance.Play(SEPath.JAN, pitch: pitch, volumeRate: 0.5f);
                 pitch += 0.05f;
                 AddScore(1);
-                Debug.Log("Good!");
+                // Debug.Log("Good!");
             }
         }
     }
