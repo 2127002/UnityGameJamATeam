@@ -6,7 +6,7 @@
 
 ## RapidRabbitとは
 音楽に合わせてジャンプをしてスコアを稼ぐ2Dプラットフォームアクションゲームです。
-![iamge](https://github.com/2127002/UnityGameJamATeam/tree/main/Images/PlayImage01.png)
+![iamge](https://github.com/2127002/UnityGameJamATeam/blob/main/Images/PlayImage01.png)
 今回のイベント中に5人で制作しました。
 [プレゼン資料も公開しています](https://docs.google.com/presentation/d/1wk_g3Us87GFHq_B_zd7-uePqpJ01r8e6/edit#slide=id.p2)
 
