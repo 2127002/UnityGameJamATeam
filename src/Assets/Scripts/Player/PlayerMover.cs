@@ -5,11 +5,7 @@ using DG.Tweening;
 
 public class PlayerMover
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
+    private ParticleSystem sandEffect;
 
     private Rigidbody rigidbody;
     private float moveSpeed;
@@ -23,6 +19,8 @@ public class PlayerMover
         this.moveSpeed = moveSpeed;
         this.bodyTransform = bodyTransform;
         this.anim = anim;
+
+        sandEffect = bodyTransform.Find("SandSmoke").GetComponent<ParticleSystem>();
     }
 
     public void Move()
@@ -38,6 +36,8 @@ public class PlayerMover
         anim.SetBool("jump", true);
         bodyTransform.DOScaleY(1.5f, 0.2f);
         rigidbody.velocity = new Vector3(rigidbody.velocity.x, 0, rigidbody.velocity.z);
+
+        sandEffect.gameObject.SetActive(false);
     }
 
     public void Jump(float jumpPower)
@@ -57,10 +57,14 @@ public class PlayerMover
         tweener = bodyTransform.DOScaleY(0.8f, 0.15f).OnComplete(() =>
         bodyTransform.DOScaleY(1.0f, 0.05f)
         );
+
+        sandEffect.gameObject.SetActive(true);
+        sandEffect.Clear();
+        sandEffect.Play();
     }
 
     public void SetGravity()
     {
-        rigidbody.AddForce(new Vector2(0, -5));
+        rigidbody.AddForce(new Vector2(0, -100));
     }
 }

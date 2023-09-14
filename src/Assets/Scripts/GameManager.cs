@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine.InputSystem;
 using KanKikuchi.AudioManager;
+using DG.Tweening;
 
 public enum GameState
 {
@@ -27,6 +28,17 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private PlayerData playerData;
     [SerializeField] private int maxJumpCount;
+    [SerializeField] private float moveSpeed;
+    [SerializeField] private CanvasGroup canvasGroup, countDown;
+    [SerializeField] private CountdownUI countdownUI;
+    [SerializeField] private ResultMenu resultMenu;
+
+    [SerializeField] private ComboView comboView;
+
+    [SerializeField] private CameraShaker cameraShaker;
+
+    private Animator anim;
+
     private GameState state;
     private Camera mainCamera;
     [SerializeField] private List<Transform> levels = new List<Transform>();
@@ -41,37 +53,52 @@ public class GameManager : MonoBehaviour
     private InputAction move, jump;
 
     private Transform player;
+    private Rigidbody playerRdb;
+    private LevelMove levelMove;
+
+    private int combo;
+
+    [SerializeField]
+    private MoonBeats moonBeats;
     // Start is called before the first frame update
     private async void Start()
     {
-        state = GameState.game;
+        Application.targetFrameRate = 60;
+
+        state = GameState.opening;
         mainCamera = Camera.main;
 
         player = Instantiate(playerData.player);
+        Camera.main.transform.parent = player.transform;
         player.transform.position = new Vector3(-8, 2, 0);
-        mover = new PlayerMover(player.GetComponent<Rigidbody>(), playerData.moveSpeed, player.transform.Find("root/body").GetComponent<Animator>(), player.transform.Find("root"));
-
+        playerRdb = player.GetComponent<Rigidbody>();
+        mover = new PlayerMover(playerRdb, playerData.moveSpeed, player.transform.Find("root/body").GetComponent<Animator>(), player.transform.Find("root"));
+        levelMove = new LevelMove(levels[0], moveSpeed);
         checkIsGround = new CheckIsGround();
         playerInput = GetComponent<PlayerInput>();
         jump = playerInput.currentActionMap["Jump"];
 
-        player.transform.Find("root/body").GetComponent<Animator>().SetBool("run", true);
+        anim = player.transform.Find("root/body").GetComponent<Animator>();
 
         jumpCount = maxJumpCount;
 
-        //オープニング演出を開始
-        var cts = new CancellationTokenSource();
-        await Beat(cts.Token);
-        cts.Cancel();
+        //オープニング
+        var cts_ = new CancellationTokenSource();
+        await Opening(cts_.Token);
+        cts_.Cancel();
     }
 
     private bool isGround;
     private int jumpCount;
     float jumpPower = 0;
+    float pitch = 1;
     void FixedUpdate()
     {
+        anim.SetBool("run", state == GameState.game);
+
+        if (state != GameState.game) return;
         //地形移動
-        // levelMove.Move();
+        levelMove.Move();
 
         //ジャンプボタン長押し
         if (jump.IsPressed())
@@ -83,6 +110,15 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (state != GameState.game) return;
+
+        if (player.transform.position.y < -20)
+        {
+            state = GameState.result;
+            Debug.Log("死んだ");
+            resultMenu.Show();
+        }
+
         if (JustMeet > 0)
         {
             JustMeet -= Time.deltaTime;
@@ -97,6 +133,8 @@ public class GameManager : MonoBehaviour
         //ジャンプボタンを押した時
         if (jump.WasPressedThisFrame() && jumpCount > 0)
         {
+            SEManager.Instance.Play(SEPath.JUMP1);
+
             jumpPower = playerData.jumpPower;
             mover.JumpStart();
 
@@ -104,12 +142,15 @@ public class GameManager : MonoBehaviour
 
             if (JustMeet <= 0)
             {
-                Debug.Log("Miss");
+                // Debug.Log("Miss");
             }
 
             if (JustMeet < 0.4f && JustMeet > 0)
             {
-                Debug.Log("Good!");
+                SEManager.Instance.Play(SEPath.JAN, pitch: pitch, volumeRate: 0.5f);
+                pitch += 0.05f;
+                AddScore(1);
+                // Debug.Log("Good!");
             }
         }
     }
@@ -117,19 +158,19 @@ public class GameManager : MonoBehaviour
     private void PlayerJump()
     {
         //着地時
-        if (isGround == false && checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && player.GetComponent<Rigidbody>().velocity.y <= 0)
+        if (isGround == false && checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && playerRdb.velocity.y <= 0)
         {
             jumpCount = maxJumpCount;
             mover.Landing();
         }
 
         //着地判定
-        isGround = checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && player.GetComponent<Rigidbody>().velocity.y <= 0;
+        isGround = checkIsGround.GetIsGround(-player.transform.up, player.transform.position) && playerRdb.velocity.y <= 0;
 
         //ジャンプボタン長押し
         if (jump.IsPressed())
         {
-            jumpPower -= Time.deltaTime * playerData.jumpPower * 5;
+            jumpPower -= Time.deltaTime * playerData.jumpPower * 10;
         }
 
         if (jumpPower <= 0)
@@ -143,14 +184,57 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    async UniTask Opening(CancellationToken token)
+    {
+        await Task.Delay(500, token);
+        await DOTween.To(() => canvasGroup.alpha, (v) => canvasGroup.alpha = v, 0, 0.3f).AsyncWaitForCompletion();
+        await Task.Delay(500, token);
+        await DOTween.To(() => countDown.alpha, (v) => countDown.alpha = v, 1.0f, 0.3f).AsyncWaitForCompletion();
+
+        for (int i = 3; i > 0; i--)
+        {
+            float fill = 1.0f;
+            await DOTween.To(() => fill, (v) => fill = v, 0.0f, 1.0f).OnUpdate(() => countdownUI.CountDownView(i.ToString(), fill)).AsyncWaitForCompletion();
+        }
+
+        countdownUI.CountDownView("GO", 0.0f);
+
+        await Task.Delay(1000, token);
+
+        DOTween.To(() => countDown.alpha, (v) => countDown.alpha = v, 0, 0.5f);
+
+        state = GameState.game;
+
+        BGMManager.Instance.Play(BGMPath.MOONBEET);
+
+        moonBeats.BeatsStart();
+
+        //判定
+        var cts = new CancellationTokenSource();
+        await Beat(cts.Token);
+        cts.Cancel();
+    }
+
     async UniTask Beat(CancellationToken token)
     {
+        await Task.Delay(372, token);
+        JustMeet = 0.3f;
         while (state == GameState.game)
         {
-            await Task.Delay(329, token);
-            JustMeet = 0.2f;
-            await Task.Delay(100, token);
-            SEManager.Instance.Play(SEPath.SYSTEM20);
+            await Task.Delay(522, token);
+            JustMeet = 0.3f;
         }
+    }
+
+    public void Clear()
+    {
+        state = GameState.result;
+        resultMenu.Show();
+    }
+
+    public void AddScore(int add)
+    {
+        combo += add;
+        comboView.ComboViewer(combo.ToString());
     }
 }

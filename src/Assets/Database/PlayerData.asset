@@ -13,8 +13,6 @@ MonoBehaviour:
   m_Name: PlayerData
   m_EditorClassIdentifier: 
   player: {fileID: 8976356449835583762, guid: 6d57b37f602da46edab9db2adf5b6689, type: 3}
-  root: {fileID: 0}
-  rigidbody: {fileID: 8976356449835583757, guid: 6d57b37f602da46edab9db2adf5b6689, type: 3}
   moveSpeed: 3
   maxMoveSpeed: 1000
-  jumpPower: 300
+  jumpPower: 600
